@@ -3,5 +3,5 @@ interface IHit {
 
     fun getInfo()
 
-    fun hit(creature: Creature, modifier: Int)
+    fun hit(creature: Creature, checkThrowCube: Boolean)
 }

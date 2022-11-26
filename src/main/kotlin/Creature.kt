@@ -1,168 +1,80 @@
+import kotlin.math.ceil
 import kotlin.random.Random
 
-open class Creature {
+abstract class Creature {
 
-    constructor() {
-        attack = try {
-            print("Введите значение атаки: ")
-            readln().toInt()
-        } catch (e: Exception) {
-            showError(e.message)
-            MIN_VALUE
+    var attack: Int
+    var protection: Int
+    var health: Int
+        set(value) {
+            field = if(value >= 0){
+                value
+            } else{
+                0
+            }
         }
 
-        protection = try {
-            print("Введите значение защиты: ")
-            readln().toInt()
-        } catch (e: Exception) {
-            showError(e.message)
-            MIN_VALUE
-        }
+    var damage: Int
+    var N: Int
+    var M: Int
 
-        N = try {
-            print("Введите значение здоровья: ")
-            readln().toInt()
-        } catch (e: Exception) {
-            showError(e.message)
-            MIN_VALUE_HEALTH
-        }
+    var healCount: Int = 0
+    var checkHeal: Boolean = true
 
-        M = try {
-            print("Введите начальное значение урона: ")
-            readln().toInt()
-        } catch (e: Exception) {
-            showError(e.message)
-            MIN_VALUE_HEALTH
-        }
+    constructor(attack: Int, protection: Int, health: Int, damage: Int) {
+        this.attack = attack
+        this.protection = protection
+        this.health = health
+        this.damage = damage
+        this.N = health
+        this.M = damage
     }
 
     companion object {
-        private const val MIN_VALUE = 1
-        private const val MAX_VALUE = 20
-        private const val MIN_VALUE_HEALTH = 1
-        private const val MIN_VALUE_DAMAGE = MIN_VALUE_HEALTH - 1
         private const val MIN_VALUE_CUBE = 1
         private const val MAX_VALUE_CUBE = 6
     }
 
-    var attack: Int = MIN_VALUE
-        set(value) {
-            if (value in MIN_VALUE..MAX_VALUE) field = value
-            else {
-                try {
-                    println("Введено/задано неккоректное значение атаки, повторите ввод!")
-                    print("Атака: ")
-                    field = readln().toInt()
-                    attack = field
-                } catch (e: Exception) {
-                    showError(e.message)
-                    field = MIN_VALUE
-                }
+    fun throwCube(modifier: Int): Boolean{
+
+        var countThrowCube = 0
+
+        do{
+            val throwCube = Random.nextInt(MIN_VALUE_CUBE, MAX_VALUE_CUBE)
+            if(throwCube >= 5){
+                return true
             }
-        }
+            countThrowCube++
+        } while (modifier > countThrowCube)
 
-    var protection: Int = MIN_VALUE
-        set(value) {
-            if (value in MIN_VALUE..MAX_VALUE) field = value
-            else {
-                try {
-                    println("Введено/задано неккоректное значение защиты, повторите ввод!")
-                    print("Защита: ")
-                    field = readln().toInt()
-                    protection = field
-                } catch (e: Exception) {
-                    showError(e.message)
-                    field = MIN_VALUE
-                }
-            }
-        }
-
-    var health: Int = MIN_VALUE_HEALTH
-
-    var damage: Int = MIN_VALUE_DAMAGE
-
-    var N: Int = MIN_VALUE_HEALTH
-        set(value) {
-            if (value >= MIN_VALUE_HEALTH) {
-                field = value
-                health = field
-            }
-            else {
-                try {
-                    println("Введено/задано неккоректное значение здоровья, повторите ввод!")
-                    print("Здоровье: ")
-                    field = readln().toInt()
-                    N = field
-                } catch (e: Exception) {
-                    showError(e.message)
-                    field = MIN_VALUE_HEALTH
-                    health = field
-                }
-            }
-        }
-
-    var M: Int = MIN_VALUE_DAMAGE
-        set(value) {
-            if (value < N) {
-                field = value
-                damage = field
-            }
-            else {
-                try {
-                    println("Введено/задано неккоректное значение урона, повторите ввод!")
-                    print("Урон: ")
-                    field = readln().toInt()
-                    M = field
-                } catch (e: Exception) {
-                    showError(e.message)
-                    field = MIN_VALUE_DAMAGE
-                    damage = field
-                }
-            }
-        }
-
-    var heal: Int = 0
-
-    var checkHeal: Boolean = true
+        return false
+    }
 
     protected fun getCreatureInfo(){
         println("Атака: ${this.attack}")
         println("Защита: ${this.protection}")
         println("Здоровье: ${this.health}")
         println("Урон: ${this.M} - ${this.N}")
-        println("Количесвто использованных хилов: ${this.heal} из 3\n")
+        println("Количесвто использованных хилов: ${this.healCount} из 3\n")
     }
 
-    protected fun hitCreature(creature: Creature, modifier: Int){
-        var i = 0
-        do {
-            val castCube = Random.nextInt(MIN_VALUE_CUBE, MAX_VALUE_CUBE)
-            if (castCube >= 5) {
-                val hit = Random.nextInt(this.M, this.N)
-                creature.health -= hit
-                println("Удар успешный!")
-                checkHeal = checkHealth(creature)
-                break
-            }
-            i++
-        } while (i < modifier)
-
-        if((i == modifier || i == 1) && checkHeal){
-            println("Удар не успешный!")
-        }
+    protected fun hitCreature(creature: Creature){
+        val hit = Random.nextInt(this.M, this.N + 1)
+        creature.health -= hit
+        println("Удар успешный, сущетсво нанесло $hit урона оппоненту")
+        creature.checkHeal = checkHealth(creature)
     }
 
     private fun checkHealth(creature: Creature): Boolean{
-        if(creature.health < 0) {
-            if(creature.heal >= 3){
-                //checkHeal = false
+        if(creature.health == 0) {
+            if(creature.healCount >= 3){
                 return false
             }
             print("У существа не осталось здоровья, захилить его? (Да / Нет)")
             when (readln()) {
                 "Да" -> {
-                    creature.heal++
-                    creature.health = creature.N / 2
+                    creature.healCount++
+                    creature.health = (ceil(creature.N / 2.0)).toInt()
                 }
 
                 "Нет" -> {
